@@ -1,0 +1,22 @@
+CC=gcc
+CFLAGS = -fPIC -Wall
+LDLIBS = ../liblmc.so
+CLIENTS= test test2
+
+.PHONY: build
+build: $(CLIENTS)
+
+$(LDLIBS):
+	@$(MAKE) -C $(SRCDIR) -f Makefile.lin $(foreach LIB,$(LDLIBS),$(notdir $(LIB)))
+
+test: test.o $(LDLIBS)
+
+test2: test2.o $(LDLIBS)
+
+test.o: test.c
+test2.o: test2.c
+
+
+.PHONY: clean
+clean:
+	rm -f test*.o $(CLIENTS)
