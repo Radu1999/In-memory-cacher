@@ -1,9 +1,11 @@
-In-memory cacher
+In-memory cacher - Linux
 Chivereanu Radu-Gabriel, Dinu Dumitru-Razvan 335CA
 
 Pentru rezolvarea acestei probleme am mapat fisiere in memorie si in momentul in care se apeleaza flush
 sincronizam cu msync. Fisierul nu contine null suplimentar atunci cand se apeleaza flush, intrucat avem 
 grija sa il trunchiem la dimensiunile necesare.
+
+-> Functionalitatile de baza au toate implementare, mai putin partea de luare a logurilor din un anumit interval. (Se returneaza toate logurile momentan).
 
 Partea cea mai interesanta este paralelizarea:
 
