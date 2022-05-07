@@ -39,6 +39,8 @@ struct lmc_cache {
 	size_t pages;
 #ifdef __unix__
 	int log_fd;
+#elif defined(_WIN32)
+	HANDLE log_handle;
 #endif
 	size_t dim;
 	int log_line_num;

@@ -119,7 +119,29 @@ lmc_init_server_os(void)
 int
 lmc_init_client_cache(struct lmc_cache *cache)
 {
-	return 0;
+	lmc_logfile_path = malloc(100);
+	memcpy(lmc_logfile_path, "logs_lmc/", 9);
+	memcpy(lmc_logfile_path + 9, cache->service_name, strlen(cache->service_name));
+	memcpy(lmc_logfile_path + 9 + strlen(cache->service_name), ".log", 5);
+
+	cache->log_handle = CreateFile(lmc_logfile_path, GENERIC_WRITE, FILE_SHARE_WRITE, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+	free(lmc_logfile_path);
+
+	cache->dim = 0;
+	cache->log_line_num = 0;
+	if(cache->log_handle == INVALID_HANDLE_VALUE) {
+		return -1;
+	}
+	cache->pages = 1;
+	HANDLE fm = CreateFileMapping(cache->log_handle, NULL, PAGE_WRITECOPY, 0, 0);
+
+	LPSYSTEM_INFO info;
+	GetSystemInfo(info);
+	cache->ptr = MapViewOfFile(fm, FILE_MAP_WRITE, 0, 0, info.dwAllocationGranularity);
+	if(cache->ptr == NULL) {
+		return -1;
+	}
+	return ftruncate(cache->log_fd, info.dwAllocationGranularity);
 }
 
 /**
