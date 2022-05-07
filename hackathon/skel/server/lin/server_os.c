@@ -83,6 +83,7 @@ static int lmc_client_function(SOCKET client_sock)
 }
 
 void create_snapshot(int sig){
+	printf("Creating snapshot...\n");
 	pid_t pid = fork();
 	if(pid == 0) {
 		getchar();
@@ -155,17 +156,27 @@ lmc_init_server_os(void)
 	
 	timer_settime(timerid, 0, &its, NULL);
 	
+	fd_set read_fds;	// multimea de citire folosita in select()
+	fd_set tmp_fds;		// multime folosita temporar
+
+	FD_ZERO(&read_fds);
+	FD_ZERO(&tmp_fds);
+
+	FD_SET(sock, &read_fds);
+
 	while (1) {
-		memset(&client, 0, sizeof(struct sockaddr_in));
-		client_size = sizeof(struct sockaddr_in);
-		client_sock = accept(sock, (struct sockaddr *)&client,
-				(socklen_t *)&client_size);
-
-		if (client_sock < 0) {
-			perror("Error while accepting clients");
+		tmp_fds = read_fds; 
+		select(sock + 1, &tmp_fds, NULL, NULL, NULL);
+		if (FD_ISSET(sock, &tmp_fds)) {
+			memset(&client, 0, sizeof(struct sockaddr_in));
+			client_size = sizeof(struct sockaddr_in);
+			client_sock = accept(sock, (struct sockaddr *)&client,
+					(socklen_t *)&client_size);
+			if (client_sock < 0) {
+				perror("Error while accepting clients");
+			}
+			lmc_client_function(client_sock);
 		}
-
-		lmc_client_function(client_sock);
 	}
 
 	free(queue);
