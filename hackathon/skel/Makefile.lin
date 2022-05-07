@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS = -fPIC -Wall -g
-LDLIBS = -lpthread -pthread
+CFLAGS = -fPIC -Wall -g 
+LDLIBS = -lpthread -pthread -lrt
 
 .PHONY: build
 build: liblmc.so lmcd
@@ -15,7 +15,7 @@ lmc_os.o: liblmc/lin/lmc_os.c include/lmc.h include/utils.h include/linkedlist.h
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 lmcd: server.o server_os.o utils.o ll.o
-	$(CC) $(LDLIBS) -o $@ $^
+	$(CC) -o $@ $^ $(LDLIBS)
 
 server.o: server/server.c include/server.h include/utils.h include/linkedlist.h
 	$(CC) $(CFLAGS) -o $@ -c $<

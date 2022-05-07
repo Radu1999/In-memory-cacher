@@ -14,6 +14,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <arpa/inet.h>
+#include <signal.h>
+#include <time.h>
 
 #include "../../include/server.h"
 #define THREAD_NUM 20
@@ -80,6 +82,13 @@ static int lmc_client_function(SOCKET client_sock)
 	return 0;
 }
 
+void create_snapshot(int sig){
+	pid_t pid = fork();
+	if(pid == 0) {
+		getchar();
+	}
+}
+
 /**
  * Server main loop function. Opens a socket in listening mode and waits for
  * connections.
@@ -121,6 +130,31 @@ lmc_init_server_os(void)
 		pthread_create(&th[i], NULL, queue_get, queue);
 	}
 
+	timer_t timerid;
+	struct sigevent sev;
+	sev.sigev_notify = SIGEV_SIGNAL;             /* notification method */
+	sev.sigev_signo = SIGVTALRM;                  /* Timer expiration signal */
+	sev.sigev_value.sival_ptr = &timerid;
+
+	timer_create(CLOCK_REALTIME, &sev, &timerid);
+
+	sigset_t block;
+	sigemptyset(&block);
+    sigaddset(&block,SIGVTALRM);
+
+	struct sigaction act={0};
+	act.sa_handler=create_snapshot;
+	sigaction(SIGVTALRM, &act, NULL);
+
+	struct itimerspec its;
+
+	its.it_value.tv_sec = 15; /* Initial expiration in secs*/
+	its.it_value.tv_nsec = 0;/* Initial expiration in nsecs*/
+	its.it_interval.tv_sec = its.it_value.tv_sec;     /* Timer interval in secs */
+	its.it_interval.tv_nsec = its.it_value.tv_nsec;   /* Timer interval in nanosecs */ 
+	
+	timer_settime(timerid, 0, &its, NULL);
+	
 	while (1) {
 		memset(&client, 0, sizeof(struct sockaddr_in));
 		client_size = sizeof(struct sockaddr_in);

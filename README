@@ -6,9 +6,12 @@ Chivereanu Radu-Gabriel, Dinu Dumitru-Razvan 335CA
 Pentru rezolvarea acestei probleme am mapat fisiere in memorie si in momentul in care se apeleaza flush
 sincronizam cu msync.
 
--> Functionalitatile de baza au toate implementare.
+-> Functionalitatile de baza au toate implementare -> Trec toate testele.
 -> BONUS: Fisierul nu contine null suplimentar atunci cand se apeleaza flush, intrucat avem 
 grija sa il retrunchiem la dimensiunile necesare.
+-> BONUS: Snapshot -> La un interval de x secunde (in cod, 15 pentru debug) se arunca un semnal (folisind un timer) care cand este prins creaza un proces copie care se opreste cu o functie blocanta (in cazul de fata getchar()). In cazul in care procesul principal crapa, putem debloca si inspecta unul din procesele copie care inca ruleaza.
+
+
 
 Cool stuff!
 Partea cea mai interesanta este paralelizarea:
