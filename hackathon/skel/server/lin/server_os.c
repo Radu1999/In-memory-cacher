@@ -21,7 +21,6 @@
 char *lmc_logfile_path;
 
 static struct LinkedList *queue;
-static pthread_mutex_t write_lock;
 
 void queue_add(struct LinkedList *q, struct lmc_client *value)
 {
@@ -93,8 +92,6 @@ lmc_init_server_os(void)
 	int opten;
 
 	queue = malloc(sizeof(*queue));
-
-	pthread_mutex_init(&write_lock, NULL);
 
 	memset(&server, 0, sizeof(struct sockaddr_in));
 
@@ -187,8 +184,7 @@ lmc_init_client_cache(struct lmc_cache *cache)
 int
 lmc_add_log_os(struct lmc_client *client, struct lmc_client_logline *log)
 {
-	pthread_mutex_lock(&write_lock);
-	if(client->cache->dim + LMC_TIME_SIZE + strlen(log->logline) + 1 > client->cache->pages * getpagesize()) {
+	if(client->cache->dim + LMC_TIME_SIZE + strlen(log->logline) + 2 > client->cache->pages * getpagesize()) {
 		int old_size = client->cache->pages * getpagesize();
 		client->cache->pages *= 2;
 		int new_size = client->cache->pages * getpagesize();
@@ -205,9 +201,8 @@ lmc_add_log_os(struct lmc_client *client, struct lmc_client_logline *log)
 	client->cache->dim += LMC_TIME_SIZE;
 	memcpy(client->cache->ptr + client->cache->dim, log->logline, strlen(log->logline));
 	client->cache->dim += strlen(log->logline);
-	memcpy(client->cache->ptr + client->cache->dim, "\n", 1);
-	client->cache->dim++;
-	pthread_mutex_unlock(&write_lock);
+	memcpy(client->cache->ptr + client->cache->dim, "\n", 2);
+	client->cache->dim += 2;
 	return 0;
 }
 

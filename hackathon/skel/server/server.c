@@ -231,11 +231,11 @@ lmc_send_loglines(struct lmc_client *client)
 	int start = 0;
 	char *point = client->cache->ptr;
 	for(int i = 0; i < client->cache->log_line_num; i++) {
-		while(point[start] != '\n') {
+		while(point[start] != '\0') {
 			start++;
 		}
 		start++;
-		if(lmc_send(client->client_sock, client->cache->ptr + left, start - left - 1, LMC_SEND_FLAGS) == -1) {
+		if(lmc_send(client->client_sock, client->cache->ptr + left, start - left - 2, LMC_SEND_FLAGS) == -1) {
 				return -1;
 		}
 		left = start;
@@ -343,7 +343,6 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 			goto end;
 		}
 	}
-	printf("HERE I AM\n");
 
 	switch (cmd.op->code) {
 	case LMC_CONNECT:
@@ -355,7 +354,7 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 		break;
 	case LMC_ADD:
 		/* TODO parse the client data and create a log line structure */
-		log = malloc(sizeof(*log));
+		log = calloc(1, sizeof(*log));
 		memcpy(log->time, cmd.data, LMC_TIME_SIZE);
 		memcpy(log->logline, cmd.data + LMC_TIME_SIZE, strlen(cmd.data) - LMC_TIME_SIZE);
 		err = lmc_add_log(client, log);
@@ -393,7 +392,6 @@ end:
 	if (cmd.data != NULL)
 		free(cmd.data);
 
-	printf("M AM coclit\n");
 	return lmc_send(client->client_sock, response, LMC_LINE_SIZE,
 			LMC_SEND_FLAGS);
 }
