@@ -16,7 +16,7 @@
 #include <arpa/inet.h>
 
 #include "../../include/server.h"
-#define THREAD_NUM 100
+#define THREAD_NUM 20
 
 char *lmc_logfile_path;
 
@@ -42,8 +42,8 @@ void *queue_get(void *args)
 	while(1) {
  		pthread_mutex_lock(&q->lock);
 
-    while (q->count == 0)
-        pthread_cond_wait(&q->is_available, &q->lock);
+		while (q->count == 0)
+			pthread_cond_wait(&q->is_available, &q->lock);
 
 		struct lmc_client * client = remove_nth_node(q, 0)->data;
 		
@@ -52,6 +52,9 @@ void *queue_get(void *args)
 		lmc_get_command(client, &disc);
 		if(disc == 0) {
 			queue_add(queue, client);
+		} else {
+			close(client->client_sock);
+			free(client);
 		}
 	}
 	return NULL;

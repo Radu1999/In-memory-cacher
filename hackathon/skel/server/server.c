@@ -100,7 +100,11 @@ lmc_add_client(struct lmc_client *client, char *name)
 	}
 
 	if (lmc_cache_count == lmc_max_caches) {
-		return -1;
+		lmc_max_caches *= 2;
+		lmc_caches = realloc(lmc_caches, lmc_max_caches * sizeof(*lmc_caches));
+		if(lmc_caches == NULL) {
+			return -1;
+		}
 	}
 
 	client->cache = malloc(sizeof(*client->cache));
@@ -220,7 +224,7 @@ lmc_send_loglines(struct lmc_client *client)
 {
 	char log_num[10];
 	snprintf(log_num, 10, "%d", client->cache->log_line_num);
-	if(lmc_send(client->client_sock, log_num, 4, LMC_SEND_FLAGS) == -1) {
+	if(lmc_send(client->client_sock, log_num, strlen(log_num), LMC_SEND_FLAGS) == -1) {
 		return -1;
 	}
 	int left = 0;
@@ -327,7 +331,7 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 		goto end;
 	}
 
-	if (cmd.op->requires_auth && client->cache->service_name == NULL) {
+	if (cmd.op->requires_auth && client->cache != NULL && client->cache->service_name == NULL) {
 		reply_msg = "authentication required";
 		goto end;
 	}
@@ -339,6 +343,7 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 			goto end;
 		}
 	}
+	printf("HERE I AM\n");
 
 	switch (cmd.op->code) {
 	case LMC_CONNECT:
@@ -352,7 +357,7 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 		/* TODO parse the client data and create a log line structure */
 		log = malloc(sizeof(*log));
 		memcpy(log->time, cmd.data, LMC_TIME_SIZE);
-		memcpy(log->logline, cmd.data + LMC_TIME_SIZE, strlen(cmd.data) - LMC_TIME_SIZE + 1);
+		memcpy(log->logline, cmd.data + LMC_TIME_SIZE, strlen(cmd.data) - LMC_TIME_SIZE);
 		err = lmc_add_log(client, log);
 		free(log);
 		break;
@@ -365,6 +370,7 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 		break;
 	case LMC_UNSUBSCRIBE:
 		err = lmc_unsubscribe_client(client);
+		*disconnect = 1;
 		break;
 	case LMC_GETLOGS:
 		err = lmc_send_loglines(client);
@@ -378,6 +384,7 @@ lmc_get_command(struct lmc_client *client, int *disconnect)
 	reply_msg = cmd.op->op_reply;
 
 end:
+	
 	if (err == 0)
 		sprintf(response, "%s", reply_msg);
 	else
@@ -386,6 +393,7 @@ end:
 	if (cmd.data != NULL)
 		free(cmd.data);
 
+	printf("M AM coclit\n");
 	return lmc_send(client->client_sock, response, LMC_LINE_SIZE,
 			LMC_SEND_FLAGS);
 }

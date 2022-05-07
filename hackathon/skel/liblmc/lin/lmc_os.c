@@ -63,5 +63,6 @@ lmc_conn_init_os(struct lmc_conn *conn, char *name)
 void
 lmc_conn_free_os(struct lmc_conn *conn)
 {
+	free(conn->name);
 	close(conn->socket);
 }
