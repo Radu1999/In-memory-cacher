@@ -1,0 +1,21 @@
+In-memory cacher
+Chivereanu Radu-Gabriel, Dinu Dumitru-Razvan 335CA
+
+Pentru rezolvarea acestei probleme am mapat fisiere in memorie si in momentul in care se apeleaza flush
+sincronizam cu msync. Fisierul nu contine null suplimentar atunci cand se apeleaza flush, intrucat avem 
+grija sa il trunchiem la dimensiunile necesare.
+
+Partea cea mai interesanta este paralelizarea:
+
+In loc sa avem cate un thread pentru fiecare client (Ineficient in momentul in care sunt multi clienti din cauza multiplelor context switchuri), avem o abordarea de tipul thread pool.
+
+Folosim o lista inlantuita cu care simulam o coada. Ideea este urmatoarea:
+
+-> Acesul coada este protejat cu un mutex
+-> Avem metoda add care ia lock ul cozii, adauga un client si notifica cu variabila conditionala a cozii
+threadurile care asteapta
+-> Un thread care asteapta, in momentul in care este notificat, extrage primul client din coada. Aceasta extragere se face sincronizat. Dupa extragere, elibereaza locul si proceseaza o comanda a clientului. Daca clientul nu a dat disconnect, la sfarsitul executarii comenzii, il readauga in coada pentru a fi din nou preluat.
+-> Startul este dat de threadul main, care atunci cand prinde conexiuni cu clienti ii adauga in coada, de unde sunt preluati de threadurile worker.
+
+
+
